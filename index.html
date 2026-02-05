@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Блог‑карта</title>
+
+  <link rel="preconnect" href="https://unpkg.com">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+
+  <style>
+    :root{
+      --bg:#ffffff;
+      --fg:#111111;
+      --muted:#6b6b6b;
+      --line:#111111;
+      --font: ui-sans-serif, system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    html, body { height: 100%; margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font); }
+    * { border-radius: 0 !important; }
+
+    .layout{
+      display:grid;
+      grid-template-columns: 360px 1fr;
+      height:100%;
+    }
+
+    aside{
+      border-right:1px solid var(--line);
+      padding:24px;
+      display:flex;
+      flex-direction:column;
+      gap:16px;
+      overflow:hidden;
+    }
+
+    h1{
+      margin:0;
+      font-size:20px;
+      font-weight:600;
+      letter-spacing:0.2px;
+    }
+
+    .meta{
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.4;
+    }
+
+    .search{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+
+    input[type="search"]{
+      appearance:none;
+      border:1px solid var(--line);
+      padding:10px 12px;
+      font-size:12px;
+      outline:none;
+      background:#fff;
+      color:var(--fg);
+    }
+    input[type="search"]:focus{
+      outline:2px solid var(--line);
+      outline-offset:2px;
+    }
+
+    .nav{
+      border-top:1px solid var(--line);
+      border-bottom:1px solid var(--line);
+      overflow:auto;
+      padding:0;
+      margin:0;
+      max-height: 52vh;
+    }
+
+    .nav a{
+      display:block;
+      padding:10px 0;
+      border-top:1px solid var(--line);
+      color:var(--fg);
+      text-decoration:none;
+      font-size:12px;
+      line-height:1.2;
+    }
+    .nav a:first-child{ border-top:0; }
+    .nav a:hover{ text-decoration:underline; }
+
+    main{ position:relative; }
+    #map{ height:100%; width:100%; }
+
+    .footer{
+      margin-top:auto;
+      padding-top:16px;
+      border-top:1px solid var(--line);
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.4;
+    }
+
+    .leaflet-tooltip.tt{
+      background: transparent;
+      border: 0;
+      box-shadow: none;
+      color: #111;
+      font: 12px ui-sans-serif, system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+      padding: 0;
+    }
+
+    @keyframes shake {
+      0%   { transform: translate(0,0); }
+      10%  { transform: translate(-2px, 0); }
+      20%  { transform: translate( 2px, 0); }
+      30%  { transform: translate(-2px, 0); }
+      40%  { transform: translate( 2px, 0); }
+      50%  { transform: translate(-1px, 0); }
+      60%  { transform: translate( 1px, 0); }
+      70%  { transform: translate(-1px, 0); }
+      80%  { transform: translate( 1px, 0); }
+      90%  { transform: translate(-1px, 0); }
+      100% { transform: translate(0,0); }
+    }
+
+    .shake { animation: shake 250ms linear; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .shake { animation: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside>
+      <h1>Блог как карта</h1>
+      <div class="meta">
+        Зум: колесо/тач. Перемещение: перетаскивание.<br>
+        Наведение подсвечивает объект. Клик открывает страницу.
+      </div>
+
+      <div class="search">
+        <input id="filter" type="search" placeholder="Фильтр по объектам…" autocomplete="off" />
+      </div>
+
+      <div class="nav" id="nav">
+        <a href="/place/bett/">Bett</a>
+        <a href="/place/sofa/">Sofa</a>
+        <a href="/place/sessel/">Sessel</a>
+        <a href="/place/couchtisch/">Couchtisch</a>
+        <a href="/place/esstisch/">Esstisch</a>
+        <a href="/place/stuhl/">Stuhl</a>
+        <a href="/place/hocker/">Hocker</a>
+        <a href="/place/schrank/">Schrank</a>
+        <a href="/place/kleiderschrank/">Kleiderschrank</a>
+        <a href="/place/kommode/">Kommode</a>
+        <a href="/place/nachttisch/">Nachttisch</a>
+        <a href="/place/regal/">Regal</a>
+        <a href="/place/buecherregal/">Bücherregal</a>
+        <a href="/place/sideboard/">Sideboard</a>
+        <a href="/place/vitrine/">Vitrine</a>
+        <a href="/place/schreibtisch/">Schreibtisch</a>
+        <a href="/place/buerostuhl/">Bürostuhl</a>
+        <a href="/place/tv-board-tv-moebel/">TV-Board / TV-Möbel</a>
+        <a href="/place/wohnwand/">Wohnwand</a>
+        <a href="/place/bank-sitzbank/">Bank (Sitzbank)</a>
+        <a href="/place/truhe/">Truhe</a>
+        <a href="/place/spiegel-als-moebelstueck-z-b-standspiegel/">Spiegel (als Möbelstück, z. B. Standspiegel)</a>
+        <a href="/place/garderobe/">Garderobe</a>
+        <a href="/place/schuhschrank/">Schuhschrank</a>
+        <a href="/place/kuechenzeile/">Küchenzeile</a>
+        <a href="/place/barhocker/">Barhocker</a>
+        <a href="/place/liege-chaiselongue/">Liege / Chaiselongue</a>
+        <a href="/place/beistelltisch/">Beistelltisch</a>
+        <a href="/place/wickelkommode/">Wickelkommode</a>
+        <a href="/place/sekretaer/">Sekretär</a>
+      </div>
+
+      <div class="footer">
+        Подложка: <b>/assets/floorplan.svg</b> (используйте легально лицензированный план/карту).<br>
+        Тряска: 1 раз каждые 10 секунд (учитывает prefers-reduced-motion).
+      </div>
+    </aside>
+
+    <main>
+      <div id="map"></div>
+    </main>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const imageUrl = "/assets/floorplan.svg";
+
+    const map = L.map('map', {
+      crs: L.CRS.Simple,
+      zoomControl: true,
+      minZoom: -2,
+      maxZoom: 6
+    });
+
+    const w = 1488, h = 1052;
+    const bounds = [[0,0],[h,w]];
+
+    L.imageOverlay(imageUrl, bounds).addTo(map);
+    map.fitBounds(bounds);
+
+    const zones = [
+      { id:"bett", label:'Bett', href:"/place/bett/", rect:[[70.0, 70.0], [238.0, 279.7]] },
+      { id:"sofa", label:'Sofa', href:"/place/sofa/", rect:[[70.0, 297.7], [238.0, 507.3]] },
+      { id:"sessel", label:'Sessel', href:"/place/sessel/", rect:[[70.0, 525.3], [238.0, 735.0]] },
+      { id:"couchtisch", label:'Couchtisch', href:"/place/couchtisch/", rect:[[70.0, 753.0], [238.0, 962.7]] },
+      { id:"esstisch", label:'Esstisch', href:"/place/esstisch/", rect:[[70.0, 980.7], [238.0, 1190.3]] },
+      { id:"stuhl", label:'Stuhl', href:"/place/stuhl/", rect:[[70.0, 1208.3], [238.0, 1418.0]] },
+      { id:"hocker", label:'Hocker', href:"/place/hocker/", rect:[[256.0, 70.0], [424.0, 279.7]] },
+      { id:"schrank", label:'Schrank', href:"/place/schrank/", rect:[[256.0, 297.7], [424.0, 507.3]] },
+      { id:"kleiderschrank", label:'Kleiderschrank', href:"/place/kleiderschrank/", rect:[[256.0, 525.3], [424.0, 735.0]] },
+      { id:"kommode", label:'Kommode', href:"/place/kommode/", rect:[[256.0, 753.0], [424.0, 962.7]] },
+      { id:"nachttisch", label:'Nachttisch', href:"/place/nachttisch/", rect:[[256.0, 980.7], [424.0, 1190.3]] },
+      { id:"regal", label:'Regal', href:"/place/regal/", rect:[[256.0, 1208.3], [424.0, 1418.0]] },
+      { id:"buecherregal", label:'Bücherregal', href:"/place/buecherregal/", rect:[[442.0, 70.0], [610.0, 279.7]] },
+      { id:"sideboard", label:'Sideboard', href:"/place/sideboard/", rect:[[442.0, 297.7], [610.0, 507.3]] },
+      { id:"vitrine", label:'Vitrine', href:"/place/vitrine/", rect:[[442.0, 525.3], [610.0, 735.0]] },
+      { id:"schreibtisch", label:'Schreibtisch', href:"/place/schreibtisch/", rect:[[442.0, 753.0], [610.0, 962.7]] },
+      { id:"buerostuhl", label:'Bürostuhl', href:"/place/buerostuhl/", rect:[[442.0, 980.7], [610.0, 1190.3]] },
+      { id:"tv-board-tv-moebel", label:'TV-Board / TV-Möbel', href:"/place/tv-board-tv-moebel/", rect:[[442.0, 1208.3], [610.0, 1418.0]] },
+      { id:"wohnwand", label:'Wohnwand', href:"/place/wohnwand/", rect:[[628.0, 70.0], [796.0, 279.7]] },
+      { id:"bank-sitzbank", label:'Bank (Sitzbank)', href:"/place/bank-sitzbank/", rect:[[628.0, 297.7], [796.0, 507.3]] },
+      { id:"truhe", label:'Truhe', href:"/place/truhe/", rect:[[628.0, 525.3], [796.0, 735.0]] },
+      { id:"spiegel-als-moebelstueck-z-b-standspiegel", label:'Spiegel (als Möbelstück, z. B. Standspiegel)', href:"/place/spiegel-als-moebelstueck-z-b-standspiegel/", rect:[[628.0, 753.0], [796.0, 962.7]] },
+      { id:"garderobe", label:'Garderobe', href:"/place/garderobe/", rect:[[628.0, 980.7], [796.0, 1190.3]] },
+      { id:"schuhschrank", label:'Schuhschrank', href:"/place/schuhschrank/", rect:[[628.0, 1208.3], [796.0, 1418.0]] },
+      { id:"kuechenzeile", label:'Küchenzeile', href:"/place/kuechenzeile/", rect:[[814.0, 70.0], [982.0, 279.7]] },
+      { id:"barhocker", label:'Barhocker', href:"/place/barhocker/", rect:[[814.0, 297.7], [982.0, 507.3]] },
+      { id:"liege-chaiselongue", label:'Liege / Chaiselongue', href:"/place/liege-chaiselongue/", rect:[[814.0, 525.3], [982.0, 735.0]] },
+      { id:"beistelltisch", label:'Beistelltisch', href:"/place/beistelltisch/", rect:[[814.0, 753.0], [982.0, 962.7]] },
+      { id:"wickelkommode", label:'Wickelkommode', href:"/place/wickelkommode/", rect:[[814.0, 980.7], [982.0, 1190.3]] },
+      { id:"sekretaer", label:'Sekretär', href:"/place/sekretaer/", rect:[[814.0, 1208.3], [982.0, 1418.0]] }
+    ];
+
+    // Отрисовка интерактивных зон
+    const layerById = new Map();
+
+    zones.forEach(z => {
+      const r = L.rectangle(z.rect, {
+        color: "#111111",
+        weight: 1,
+        fillOpacity: 0.0
+      }).addTo(map);
+
+      layerById.set(z.id, r);
+
+      const base  = { color:"#111111", weight:1, fillOpacity:0.0 };
+      const hover = { color:"#111111", weight:3, fillOpacity:0.06 };
+      const down  = { color:"#111111", weight:3, fillOpacity:0.12 };
+
+      r.on('mouseover', () => r.setStyle(hover));
+      r.on('mouseout',  () => r.setStyle(base));
+      r.on('mousedown', () => r.setStyle(down));
+      r.on('mouseup',   () => r.setStyle(hover));
+
+      r.on('click', () => { window.location.href = z.href; });
+
+      r.on('add', () => {
+        const el = r.getElement?.();
+        if (el) el.style.cursor = "pointer";
+      });
+
+      const center = [
+        (z.rect[0][0] + z.rect[1][0]) / 2,
+        (z.rect[0][1] + z.rect[1][1]) / 2
+      ];
+
+      L.marker(center, { interactive:false, opacity:0.0 })
+        .addTo(map)
+        .bindTooltip(z.label, {
+          permanent:true,
+          direction:"center",
+          className:"tt",
+          opacity:1.0
+        })
+        .openTooltip();
+    });
+
+    // Тряска каждые 10 секунд
+    const mapEl = document.getElementById("map");
+    setInterval(() => {
+      mapEl.classList.remove("shake");
+      void mapEl.offsetWidth;
+      mapEl.classList.add("shake");
+    }, 10000);
+
+    // Фильтр списка + подсветка на карте
+    const filterEl = document.getElementById("filter");
+    const navEl = document.getElementById("nav");
+
+    function setVisible(id, visible) {
+      const layer = layerById.get(id);
+      if (!layer) return;
+      if (visible) {
+        if (!map.hasLayer(layer)) layer.addTo(map);
+      } else {
+        if (map.hasLayer(layer)) map.removeLayer(layer);
+      }
+    }
+
+    filterEl.addEventListener("input", () => {
+      const q = filterEl.value.trim().toLowerCase();
+      const links = Array.from(navEl.querySelectorAll("a"));
+      links.forEach(a => {
+        const text = a.textContent.trim().toLowerCase();
+        const href = a.getAttribute("href") || "";
+        const id = href.split("/").filter(Boolean).pop();
+        const ok = !q || text.includes(q);
+        a.style.display = ok ? "block" : "none";
+        setVisible(id, ok);
+      });
+    });
+  </script>
+</body>
+</html>

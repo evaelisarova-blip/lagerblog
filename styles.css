@@ -1,0 +1,13 @@
+/* styles.css — Swiss minimalism */ 
+body { margin:0; font-family: Helvetica, Arial, sans-serif; background:#f4f4f2; }
+.frame { padding:20px; height:100vh; box-sizing:border-box; }
+.topbar { display:flex; justify-content:space-between; border-bottom:1px solid #ddd; padding-bottom:10px; }
+.brand__mark { font-weight:bold; border:1px solid #ccc; padding:4px 8px; }
+.brand__name { font-size:12px; letter-spacing:.1em; margin-left:6px; }
+.meta__item { font-size:11px; margin-left:6px; }
+.floor { position:relative; height:calc(100% - 50px); overflow:hidden; }
+.panel { position:absolute; bottom:20px; left:20px; background:#fff; padding:16px; border-radius:12px; width:360px; }
+.tile { position:absolute; background:rgba(255,255,255,.8); border:1px solid #ccc; border-radius:12px; padding:12px; width:140px; }
+.tile--nav { text-transform:uppercase; font-size:12px; font-weight:bold; text-decoration:none; color:#000; }
+.tile__title { font-weight:bold; font-size:13px; }
+.tile__sub { font-size:11px; color:#666; }
